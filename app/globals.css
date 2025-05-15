@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 270 100% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 270 100% 96%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 270 100% 50%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 6.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 6.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 270 100% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 270 100% 15%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 270 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom chart colors */
+:root {
+  --color-price: #8400ff;
+  --color-volume: #a743ff;
+  --color-rsi: #8400ff;
+  --color-macd: #8400ff;
+  --color-signal: #ff6b00;
+  --color-upper: #ff6b00;
+  --color-middle: #8400ff;
+  --color-lower: #00b8ff;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(132, 0, 255, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(132, 0, 255, 0.7);
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(132, 0, 255, 0.3);
+}
+
+/* Gradient backgrounds */
+.bg-purple-gradient {
+  background: linear-gradient(135deg, #8400ff 0%, #a743ff 100%);
+}
+
+.bg-purple-to-blue-gradient {
+  background: linear-gradient(135deg, #8400ff 0%, #0070f3 100%);
+}
+
+/* Chart styles */
+.recharts-default-tooltip {
+  background-color: rgba(30, 30, 30, 0.8) !important;
+  border: 1px solid #8400ff !important;
+  border-radius: 8px !important;
+}
+
+.recharts-tooltip-label {
+  color: #ffffff !important;
+}
+
+.recharts-tooltip-item {
+  color: #ffffff !important;
+}
