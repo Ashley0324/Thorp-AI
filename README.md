@@ -75,9 +75,9 @@ Thorp.AI deeply integrates with blockchain technology to provide enhanced functi
 
 - **Frontend**: Next.js, React, TypeScript, Tailwind CSS, shadcn/ui
 - **State Management**: React Context API
+- **Smart Contract**: Solana CLI, Anchor CLI
 - **API Integration**: Multiple cryptocurrency exchange APIs
 - **Authentication**: JWT-based authentication, Web3 wallet authentication
-- **Blockchain Integration**: Ethereum, NFT standards (ERC-721/ERC-1155)
 - **Styling**: Tailwind CSS with dark/light theme support
 - **Internationalization**: Multi-language support
 
