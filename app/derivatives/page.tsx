@@ -63,9 +63,7 @@ export default function DerivativesPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-300">
-          BTC衍生品价格
-        </h1>
+        <h1 className="text-3xl font-bold text-foreground">BTC衍生品价格</h1>
         <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/50">
           <AlertCircle className="h-3 w-3 mr-1" />
           模拟数据
@@ -73,7 +71,7 @@ export default function DerivativesPage() {
       </div>
 
       <Tabs defaultValue="perpetual" className="w-full" onValueChange={setActiveTab}>
-        <TabsList className="bg-background/50 w-full sm:w-auto grid grid-cols-2 sm:grid-cols-4 sm:flex">
+        <TabsList className="bg-background/50 w-full grid grid-cols-2 sm:grid-cols-4 overflow-x-auto">
           <TabsTrigger value="perpetual" className="data-[state=active]:bg-primary data-[state=active]:text-white">
             永续合约
           </TabsTrigger>
@@ -107,13 +105,13 @@ export default function DerivativesPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-primary/5">
-                        <TableHead className="text-primary">交易所</TableHead>
-                        <TableHead className="text-primary">合约</TableHead>
-                        <TableHead className="text-right text-primary">价格</TableHead>
-                        <TableHead className="text-right text-primary">标记价格</TableHead>
-                        <TableHead className="text-right text-primary">资金费率</TableHead>
-                        <TableHead className="text-right text-primary">持仓量</TableHead>
-                        <TableHead className="text-right text-primary">24小时成交量</TableHead>
+                        <TableHead className="text-foreground">交易所</TableHead>
+                        <TableHead className="text-foreground">合约</TableHead>
+                        <TableHead className="text-right text-foreground">价格</TableHead>
+                        <TableHead className="text-right text-foreground">标记价格</TableHead>
+                        <TableHead className="text-right text-foreground">资金费率</TableHead>
+                        <TableHead className="text-right text-foreground">持仓量</TableHead>
+                        <TableHead className="text-right text-foreground">24小时成交量</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -170,13 +168,13 @@ export default function DerivativesPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-primary/5">
-                        <TableHead className="text-primary">交易所</TableHead>
-                        <TableHead className="text-primary">合约</TableHead>
-                        <TableHead className="text-right text-primary">价格</TableHead>
-                        <TableHead className="text-right text-primary">标记价格</TableHead>
-                        <TableHead className="text-right text-primary">到期日</TableHead>
-                        <TableHead className="text-right text-primary">持仓量</TableHead>
-                        <TableHead className="text-right text-primary">24小时成交量</TableHead>
+                        <TableHead className="text-foreground">交易所</TableHead>
+                        <TableHead className="text-foreground">合约</TableHead>
+                        <TableHead className="text-right text-foreground">价格</TableHead>
+                        <TableHead className="text-right text-foreground">标记价格</TableHead>
+                        <TableHead className="text-right text-foreground">到期日</TableHead>
+                        <TableHead className="text-right text-foreground">持仓量</TableHead>
+                        <TableHead className="text-right text-foreground">24小时成交量</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -223,13 +221,13 @@ export default function DerivativesPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-primary/5">
-                        <TableHead className="text-primary">交易所</TableHead>
-                        <TableHead className="text-primary">合约</TableHead>
-                        <TableHead className="text-right text-primary">价格</TableHead>
-                        <TableHead className="text-right text-primary">标记价格</TableHead>
-                        <TableHead className="text-right text-primary">行权价</TableHead>
-                        <TableHead className="text-right text-primary">到期日</TableHead>
-                        <TableHead className="text-right text-primary">持仓量</TableHead>
+                        <TableHead className="text-foreground">交易所</TableHead>
+                        <TableHead className="text-foreground">合约</TableHead>
+                        <TableHead className="text-right text-foreground">价格</TableHead>
+                        <TableHead className="text-right text-foreground">标记价格</TableHead>
+                        <TableHead className="text-right text-foreground">行权价</TableHead>
+                        <TableHead className="text-right text-foreground">到期日</TableHead>
+                        <TableHead className="text-right text-foreground">持仓量</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

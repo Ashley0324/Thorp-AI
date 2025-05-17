@@ -11,7 +11,17 @@ import {
   type PredictionResult,
   type HistoricalPrediction,
 } from "@/lib/ai-prediction"
-import { TrendingUp, TrendingDown, Minus, BrainCircuit, CheckCircle, XCircle } from "lucide-react"
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  BrainCircuit,
+  CheckCircle,
+  XCircle,
+  Calendar,
+  AlertCircle,
+  Clock,
+} from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
@@ -37,11 +47,13 @@ export default function PredictionPage() {
   })
 
   const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"24h" | "7d" | "30d">("24h")
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true)
+      setError(null)
       try {
         // Fetch predictions for all timeframes
         const [prediction24h, prediction7d, prediction30d, history24h, history7d, history30d] = await Promise.all([
@@ -66,6 +78,7 @@ export default function PredictionPage() {
         })
       } catch (error) {
         console.error("Error fetching prediction data:", error)
+        setError("Failed to fetch prediction data. Please try again later.")
       } finally {
         setLoading(false)
       }
@@ -87,22 +100,29 @@ export default function PredictionPage() {
   }
 
   // Calculate accuracy for the current timeframe
-  const accuracy = historicalPredictions[activeTab].length > 0 ? calculateAccuracy(historicalPredictions[activeTab]) : 0
+  const accuracy =
+    historicalPredictions[activeTab]?.length > 0 ? calculateAccuracy(historicalPredictions[activeTab]) : 0
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-300">
-          AI预测
-        </h1>
+        <h1 className="text-3xl font-bold text-foreground">AI预测</h1>
       </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <Tabs
         defaultValue="24h"
         className="w-full"
         onValueChange={(value) => setActiveTab(value as "24h" | "7d" | "30d")}
       >
-        <TabsList className="bg-background/50 w-full sm:w-auto grid grid-cols-3 sm:flex">
+        <TabsList className="bg-background/50 w-full grid grid-cols-3 overflow-x-auto">
           <TabsTrigger value="24h" className="data-[state=active]:bg-primary data-[state=active]:text-white">
             24小时预测
           </TabsTrigger>
@@ -117,7 +137,7 @@ export default function PredictionPage() {
         <TabsContent value="24h">
           <PredictionContent
             prediction={predictions["24h"]}
-            historicalPredictions={historicalPredictions["24h"]}
+            historicalPredictions={historicalPredictions["24h"] || []}
             accuracy={accuracy}
             loading={loading}
             timeframe="24h"
@@ -127,7 +147,7 @@ export default function PredictionPage() {
         <TabsContent value="7d">
           <PredictionContent
             prediction={predictions["7d"]}
-            historicalPredictions={historicalPredictions["7d"]}
+            historicalPredictions={historicalPredictions["7d"] || []}
             accuracy={accuracy}
             loading={loading}
             timeframe="7d"
@@ -137,7 +157,7 @@ export default function PredictionPage() {
         <TabsContent value="30d">
           <PredictionContent
             prediction={predictions["30d"]}
-            historicalPredictions={historicalPredictions["30d"]}
+            historicalPredictions={historicalPredictions["30d"] || []}
             accuracy={accuracy}
             loading={loading}
             timeframe="30d"
@@ -187,58 +207,49 @@ function PredictionContent({
     }
   }
 
-  // Generate calendar data starting from today
+  // Generate calendar data starting from May 1st
   const generateCalendarData = () => {
+    // Start from May 1st, 2025
+    const startDate = new Date(2025, 4, 1) // Month is 0-indexed, so 4 = May
     const today = new Date()
     const currentMonth = today.getMonth()
     const currentYear = today.getFullYear()
 
-    // Get the first day of the month
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay()
-
-    // Get the number of days in the month
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
-
     // Create calendar grid
     const calendarDays = []
 
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
+    // Get the first day of May (for spacing)
+    const firstDayOfMay = startDate.getDay()
+
+    // Add empty cells for days before May 1st
+    for (let i = 0; i < firstDayOfMay; i++) {
       calendarDays.push({ day: null, predictions: [] })
     }
 
-    // Add days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day)
+    // Map of dates to predictions for quick lookup
+    const predictionsByDate = new Map()
+    historicalPredictions.forEach((pred) => {
+      const date = new Date(pred.timestamp)
+      const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+      predictionsByDate.set(dateKey, pred)
+    })
 
-      // Skip days before today
-      if (date < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
-        calendarDays.push({ day, date, predictions: [] })
-        continue
-      }
+    // Add days from May 1st to today
+    for (let date = new Date(startDate); date <= today; date.setDate(date.getDate() + 1)) {
+      const day = date.getDate()
+      const month = date.getMonth()
+      const year = date.getFullYear()
+      const dateKey = `${year}-${month}-${day}`
 
-      // Generate a prediction for this day if it's today or in the future
-      const dayPrediction =
-        day === today.getDate()
-          ? // For today, use the actual prediction if available
-            prediction
-            ? [
-                {
-                  timestamp: new Date().toISOString(),
-                  prediction: prediction.prediction,
-                  confidence: prediction.confidence,
-                  priceChange: prediction.priceChange,
-                  reasoning: prediction.reasoning,
-                  actual: "neutral" as "up" | "down" | "sideways",
-                  actualChange: 0,
-                  wasCorrect: false,
-                },
-              ]
-            : []
-          : // For future days, generate empty slots
-            []
+      // Get prediction for this day if available
+      const dayPrediction = predictionsByDate.get(dateKey)
+      const predictions = dayPrediction ? [dayPrediction] : []
 
-      calendarDays.push({ day, date, predictions: dayPrediction })
+      calendarDays.push({
+        day,
+        date: new Date(date),
+        predictions,
+      })
     }
 
     return calendarDays
@@ -247,8 +258,9 @@ function PredictionContent({
   const calendarData = generateCalendarData()
 
   // Calculate success and failure counts
-  const successCount = historicalPredictions.filter((p) => p.wasCorrect).length
-  const failureCount = historicalPredictions.filter((p) => !p.wasCorrect).length
+  const successCount = historicalPredictions.filter((p) => p.wasCorrect === true).length
+  const failureCount = historicalPredictions.filter((p) => p.wasCorrect === false).length
+  const pendingCount = historicalPredictions.filter((p) => p.wasCorrect === null).length
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -324,7 +336,7 @@ function PredictionContent({
             <CheckCircle className="h-5 w-5 text-primary" />
             预测准确度
           </CardTitle>
-          <CardDescription>本月预测统计</CardDescription>
+          <CardDescription>预测统计 (5月1日至今)</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -363,7 +375,7 @@ function PredictionContent({
               </div>
 
               <p className="text-center text-sm text-muted-foreground mt-4">
-                基于 {historicalPredictions.length} 个历史预测
+                基于 {historicalPredictions.length - pendingCount} 个历史预测
               </p>
             </div>
           )}
@@ -374,10 +386,10 @@ function PredictionContent({
       <Card className="lg:col-span-3 border-border/40 bg-background/60 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BrainCircuit className="h-5 w-5 text-primary" />
-            预测日历
+            <Calendar className="h-5 w-5 text-primary" />
+            预测日历 (5月1日至今)
           </CardTitle>
-          <CardDescription>本月预测记录和结果</CardDescription>
+          <CardDescription>历史预测记录和结果</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -397,55 +409,69 @@ function PredictionContent({
               <div className="grid grid-cols-7 gap-1">
                 {calendarData.map((day, index) => {
                   const today = new Date()
-                  const isToday = day.day && today.getDate() === day.day && today.getMonth() === day.date?.getMonth()
-                  const isPast = day.date && day.date < new Date(today.getFullYear(), today.getMonth(), today.getDate())
+                  today.setHours(0, 0, 0, 0)
+                  const isToday =
+                    day.day &&
+                    day.date &&
+                    today.getDate() === day.date.getDate() &&
+                    today.getMonth() === day.date.getMonth() &&
+                    today.getFullYear() === day.date.getFullYear()
 
                   return (
                     <div
                       key={index}
                       className={`min-h-[100px] p-2 border rounded-lg ${
                         day.day ? "border-border/40" : "border-transparent"
-                      } ${isToday ? "bg-primary/5 border-primary/40" : ""} ${isPast ? "opacity-50" : ""}`}
+                      } ${isToday ? "bg-primary/5 border-primary/40" : ""}`}
                     >
                       {day.day && (
                         <>
                           <div className="text-right mb-1">{day.day}</div>
                           <div className="space-y-1">
                             {day.predictions.map((pred, i) => (
-                              <div
-                                key={i}
-                                className={`text-xs p-1 rounded flex items-center gap-1 ${
-                                  isToday
-                                    ? "bg-primary/20 text-primary"
-                                    : pred.wasCorrect
+                              <div key={i} className="flex flex-col space-y-1">
+                                {/* 预测方向 */}
+                                <div
+                                  className={`text-xs p-1 rounded flex items-center justify-center gap-1 ${
+                                    pred.prediction === "up"
                                       ? "bg-green-500/20 text-green-500"
-                                      : "bg-red-500/20 text-red-500"
-                                }`}
-                              >
-                                {isToday ? (
-                                  <BrainCircuit className="h-3 w-3" />
-                                ) : pred.wasCorrect ? (
-                                  <CheckCircle className="h-3 w-3" />
+                                      : pred.prediction === "down"
+                                        ? "bg-red-500/20 text-red-500"
+                                        : "bg-gray-500/20 text-gray-500"
+                                  }`}
+                                >
+                                  {pred.prediction === "up" ? (
+                                    <TrendingUp className="h-3 w-3" />
+                                  ) : pred.prediction === "down" ? (
+                                    <TrendingDown className="h-3 w-3" />
+                                  ) : (
+                                    <Minus className="h-3 w-3" />
+                                  )}
+                                  <span>
+                                    {pred.prediction === "up" ? "上涨" : pred.prediction === "down" ? "下跌" : "横盘"}
+                                  </span>
+                                </div>
+
+                                {/* 预测结果 */}
+                                {pred.wasCorrect !== null ? (
+                                  <div
+                                    className={`text-xs p-1 rounded flex justify-center ${
+                                      pred.wasCorrect ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                                    }`}
+                                  >
+                                    {pred.wasCorrect ? (
+                                      <CheckCircle className="h-4 w-4" />
+                                    ) : (
+                                      <XCircle className="h-4 w-4" />
+                                    )}
+                                  </div>
                                 ) : (
-                                  <XCircle className="h-3 w-3" />
+                                  <div className="text-xs p-1 rounded flex justify-center bg-yellow-500/10 text-yellow-500">
+                                    <Clock className="h-4 w-4" />
+                                  </div>
                                 )}
-                                <span>
-                                  {pred.prediction === "up" ? "上涨" : pred.prediction === "down" ? "下跌" : "横盘"}
-                                </span>
                               </div>
                             ))}
-                            {isToday && day.predictions.length === 0 && prediction && (
-                              <div className="text-xs p-1 rounded flex items-center gap-1 bg-primary/20 text-primary">
-                                <BrainCircuit className="h-3 w-3" />
-                                <span>
-                                  {prediction.prediction === "up"
-                                    ? "上涨"
-                                    : prediction.prediction === "down"
-                                      ? "下跌"
-                                      : "横盘"}
-                                </span>
-                              </div>
-                            )}
                           </div>
                         </>
                       )}
@@ -456,18 +482,30 @@ function PredictionContent({
             </div>
           )}
         </CardContent>
-        <CardFooter className="text-xs text-muted-foreground border-t border-border/40 px-6 py-3 flex justify-between">
+        <CardFooter className="text-xs text-muted-foreground border-t border-border/40 px-6 py-3 flex flex-wrap justify-between gap-2">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span>预测成功</span>
+            <span>上涨预测</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <span>下跌预测</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+            <span>横盘预测</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-3 w-3 text-green-500" />
+            <span>预测成功</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <XCircle className="h-3 w-3 text-red-500" />
             <span>预测失败</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-primary"></div>
-            <span>今日</span>
+            <Clock className="h-3 w-3 text-yellow-500" />
+            <span>等待结果</span>
           </div>
         </CardFooter>
       </Card>

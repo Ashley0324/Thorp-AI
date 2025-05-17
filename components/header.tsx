@@ -1,16 +1,26 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { MoonIcon, SunIcon, Bell, User } from "lucide-react"
+import { MoonIcon, SunIcon, Globe, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
 import { Badge } from "@/components/ui/badge"
+import { useLanguage } from "@/contexts/language-context"
 
 export default function Header() {
   const { theme, setTheme } = useTheme()
+  const { language, setLanguage, t } = useLanguage()
   const [mounted, setMounted] = useState(false)
   const [currentPrice, setCurrentPrice] = useState<string | null>(null)
   const [priceChange, setPriceChange] = useState<number>(0)
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false)
+
+  // Language options
+  const languages = [
+    { name: "简体中文", code: "zh-CN" },
+    { name: "繁體中文", code: "zh-TW" },
+    { name: "English", code: "en" },
+  ]
 
   useEffect(() => {
     setMounted(true)
@@ -39,8 +49,36 @@ export default function Header() {
     fetchPrice()
     const interval = setInterval(fetchPrice, 30000) // Update every 30 seconds
 
-    return () => clearInterval(interval)
-  }, [])
+    // Add click outside listener to close language menu
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest(".lang-menu-container") && isLangMenuOpen) {
+        setIsLangMenuOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isLangMenuOpen])
+
+  const handleLanguageChange = (langCode: string) => {
+    setLanguage(langCode)
+    setIsLangMenuOpen(false)
+    console.log(`Language changed to: ${langCode}`)
+  }
+
+  const toggleLangMenu = () => {
+    setIsLangMenuOpen(!isLangMenuOpen)
+  }
+
+  // Get language display name
+  const getLanguageDisplayName = (code: string) => {
+    const lang = languages.find((l) => l.code === code)
+    return lang ? lang.name : code
+  }
 
   return (
     <header className="sticky top-16 z-40 border-b border-b-border/40 bg-background/80 backdrop-blur-sm">
@@ -65,10 +103,30 @@ export default function Header() {
             </div>
           )}
 
-          <Button variant="ghost" size="icon" className="rounded-full relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
-          </Button>
+          {/* Custom Language Menu */}
+          <div className="relative lang-menu-container">
+            <Button variant="ghost" size="icon" className="rounded-full relative" onClick={toggleLangMenu}>
+              <Globe className="h-5 w-5" />
+            </Button>
+
+            {isLangMenuOpen && (
+              <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-background border border-border z-50">
+                <div className="py-1">
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-accent ${
+                        language === lang.code ? "bg-primary/10 text-primary" : ""
+                      }`}
+                      onClick={() => handleLanguageChange(lang.code)}
+                    >
+                      {lang.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           <Button
             variant="ghost"

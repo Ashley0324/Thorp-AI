@@ -2,8 +2,8 @@
 export const COMPANY = {
   name: "Thorp.AI",
   logo: {
-    icon: "Thorp", // Lucide icon name
-    text: "Thorp.AI",
+    path: "/images/logo.png",
+    alt: "Thorp.AI Logo",
   },
   description: "专业的比特币量化分析和预测平台，提供全面的市场数据、技术指标和AI预测",
   copyright: "© 2025 Manas(Hongkong) 保留所有权利.",
@@ -23,27 +23,22 @@ export const NAV_ITEMS = [
   {
     name: "市场概况",
     href: "/",
-    icon: "Home",
   },
   {
-    name: "BTC指标分析",
+    name: "指标分析",
     href: "/indicators",
-    icon: "LineChart",
   },
   {
     name: "热点事件",
     href: "/news",
-    icon: "Newspaper",
   },
   {
-    name: "BTC衍生品",
+    name: "衍生品",
     href: "/derivatives",
-    icon: "TrendingUp",
   },
   {
     name: "AI预测",
     href: "/prediction",
-    icon: "BrainCircuit",
   },
 ]
 

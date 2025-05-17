@@ -123,3 +123,17 @@
 .recharts-tooltip-item {
   color: #ffffff !important;
 }
+
+/* MACD chart hover effects */
+.macd-bar:hover path {
+  fill: var(--macd-color-hover) !important;
+  transition: fill 0.2s ease;
+}
+
+[data-macd-value="positive"] path {
+  --macd-color-hover: #10b981;
+}
+
+[data-macd-value="negative"] path {
+  --macd-color-hover: #ef4444;
+}

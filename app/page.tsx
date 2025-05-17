@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, AreaChart, Area, Tooltip } from "recharts"
 import { getBTC24hTicker, getBTCKlines, getExchangePrices, getFundingRates } from "@/lib/binance-api"
+import { getBTCDominance, getFearGreedIndex } from "@/lib/market-api"
 import { formatCurrency, formatPercent } from "@/lib/utils"
 import {
   ArrowUpIcon,
@@ -20,6 +21,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
+import { useLanguage } from "@/contexts/language-context"
 
 interface MarketData {
   ticker: any
@@ -31,24 +33,38 @@ interface MarketData {
 }
 
 export default function MarketOverview() {
+  const { t } = useLanguage()
   const [marketData, setMarketData] = useState<MarketData | null>(null)
   const [timeframe, setTimeframe] = useState<string>("1d")
   const [loading, setLoading] = useState<boolean>(true)
+  const [apiErrors, setApiErrors] = useState<{
+    fearGreed: boolean
+    dominance: boolean
+  }>({
+    fearGreed: false,
+    dominance: false,
+  })
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true)
       try {
-        const [ticker, klines, exchanges, fundingRates] = await Promise.all([
+        const [ticker, klines, exchanges, fundingRates, fearGreedIndex, btcDominance] = await Promise.all([
           getBTC24hTicker(),
           getBTCKlines(timeframe, 30),
           getExchangePrices(),
           getFundingRates(),
+          getFearGreedIndex().catch((err) => {
+            console.error("Error fetching Fear & Greed Index:", err)
+            setApiErrors((prev) => ({ ...prev, fearGreed: true }))
+            return 50 // Fallback value
+          }),
+          getBTCDominance().catch((err) => {
+            console.error("Error fetching BTC dominance:", err)
+            setApiErrors((prev) => ({ ...prev, dominance: true }))
+            return 50 // Fallback value
+          }),
         ])
-
-        // Mock fear & greed index and BTC dominance
-        const fearGreedIndex = Math.floor(Math.random() * 100)
-        const btcDominance = 40 + Math.random() * 20
 
         setMarketData({
           ticker,
@@ -85,11 +101,11 @@ export default function MarketOverview() {
 
   // Format fear & greed index status
   const getFearGreedStatus = (value: number) => {
-    if (value <= 25) return "Extreme Fear"
-    if (value <= 45) return "Fear"
-    if (value <= 55) return "Neutral"
-    if (value <= 75) return "Greed"
-    return "Extreme Greed"
+    if (value <= 25) return t("extremeFear")
+    if (value <= 45) return t("fear")
+    if (value <= 55) return t("neutral")
+    if (value <= 75) return t("greed")
+    return t("extremeGreed")
   }
 
   const getFearGreedColor = (value: number) => {
@@ -103,11 +119,9 @@ export default function MarketOverview() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-300">
-          市场概况
-        </h1>
+        <h1 className="text-3xl font-bold text-foreground">{t("marketOverview")}</h1>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">数据更新时间:</span>
+          <span className="text-sm text-muted-foreground">{t("dataUpdateTime")}:</span>
           <span className="text-sm">{new Date().toLocaleString()}</span>
         </div>
       </div>
@@ -118,7 +132,7 @@ export default function MarketOverview() {
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <Bitcoin className="h-4 w-4 text-primary" />
-              当前价格
+              {t("currentPrice")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -142,7 +156,7 @@ export default function MarketOverview() {
               ) : (
                 <ArrowRightIcon className="h-4 w-4" />
               )}
-              24小时变化
+              {t("24hChange")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -177,7 +191,7 @@ export default function MarketOverview() {
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" />
-              24小时最高价
+              {t("24hHigh")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -195,7 +209,7 @@ export default function MarketOverview() {
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <TrendingDown className="h-4 w-4 text-primary" />
-              24小时最低价
+              {t("24hLow")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -216,19 +230,21 @@ export default function MarketOverview() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-primary" />
-              BTC 市场支配率
+              {t("btcDominance")}
             </CardTitle>
-            <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/50">
-              <AlertCircle className="h-3 w-3 mr-1" />
-              模拟数据
-            </Badge>
+            {apiErrors.dominance && (
+              <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/50">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {t("apiError")}
+              </Badge>
+            )}
           </CardHeader>
           <CardContent>
             {loading ? (
               <Skeleton className="h-[200px] w-full" />
             ) : (
               <div className="flex flex-col items-center">
-                <div className="text-4xl font-bold mb-2 text-primary">
+                <div className="text-4xl font-bold mb-2 text-foreground">
                   {marketData ? formatPercent(marketData.btcDominance / 100) : "N/A"}
                 </div>
                 <div className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -237,7 +253,7 @@ export default function MarketOverview() {
                     style={{ width: `${marketData?.btcDominance || 0}%` }}
                   ></div>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">比特币在整个加密货币市场中的占比</p>
+                <p className="text-sm text-muted-foreground mt-2">{t("btcDominanceDesc")}</p>
               </div>
             )}
           </CardContent>
@@ -247,12 +263,14 @@ export default function MarketOverview() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Gauge className="h-5 w-5 text-primary" />
-              恐惧与贪婪指数
+              {t("fearGreedIndex")}
             </CardTitle>
-            <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/50">
-              <AlertCircle className="h-3 w-3 mr-1" />
-              模拟数据
-            </Badge>
+            {apiErrors.fearGreed && (
+              <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/50">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {t("apiError")}
+              </Badge>
+            )}
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -290,7 +308,7 @@ export default function MarketOverview() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <CardTitle className="flex items-center gap-2">
               <LineChart className="h-5 w-5 text-primary" />
-              BTC 价格走势
+              {t("priceChart")}
             </CardTitle>
             <Tabs defaultValue="1d" className="w-full sm:w-auto">
               <TabsList className="bg-background/50">
@@ -299,28 +317,28 @@ export default function MarketOverview() {
                   onClick={() => setTimeframe("1h")}
                   className="data-[state=active]:bg-primary data-[state=active]:text-white"
                 >
-                  1小时
+                  {t("1hour")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="4h"
                   onClick={() => setTimeframe("4h")}
                   className="data-[state=active]:bg-primary data-[state=active]:text-white"
                 >
-                  4小时
+                  {t("4hour")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="1d"
                   onClick={() => setTimeframe("1d")}
                   className="data-[state=active]:bg-primary data-[state=active]:text-white"
                 >
-                  日线
+                  {t("daily")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="1w"
                   onClick={() => setTimeframe("1w")}
                   className="data-[state=active]:bg-primary data-[state=active]:text-white"
                 >
-                  周线
+                  {t("weekly")}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -378,7 +396,7 @@ export default function MarketOverview() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" />
-            BTC 成交量
+            {t("volume")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -423,15 +441,15 @@ export default function MarketOverview() {
 
       {/* Exchange Prices and Funding Rates */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-border/40 bg-background/60 backdrop-blur-sm">
+        <Card className="card-hover border-border/40 bg-background/60 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Bitcoin className="h-5 w-5 text-primary" />
-              交易所价格比较
+              {t("exchangePriceComparison")}
             </CardTitle>
             <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/50">
               <AlertCircle className="h-3 w-3 mr-1" />
-              部分模拟数据
+              {t("partialMockData")}
             </Badge>
           </CardHeader>
           <CardContent>
@@ -442,9 +460,9 @@ export default function MarketOverview() {
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-primary/5">
-                      <TableHead className="text-primary">交易所</TableHead>
-                      <TableHead className="text-right text-primary">价格</TableHead>
-                      <TableHead className="text-right text-primary">与平均价差</TableHead>
+                      <TableHead className="text-foreground">{t("exchange")}</TableHead>
+                      <TableHead className="text-right text-foreground">{t("price")}</TableHead>
+                      <TableHead className="text-right text-foreground">{t("diffFromAvg")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -473,15 +491,15 @@ export default function MarketOverview() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 bg-background/60 backdrop-blur-sm">
+        <Card className="card-hover border-border/40 bg-background/60 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              资金费率
+              {t("fundingRate")}
             </CardTitle>
             <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/50">
               <AlertCircle className="h-3 w-3 mr-1" />
-              部分模拟数据
+              {t("partialMockData")}
             </Badge>
           </CardHeader>
           <CardContent>
@@ -492,9 +510,9 @@ export default function MarketOverview() {
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-primary/5">
-                      <TableHead className="text-primary">交易所</TableHead>
-                      <TableHead className="text-right text-primary">费率</TableHead>
-                      <TableHead className="text-right text-primary">年化</TableHead>
+                      <TableHead className="text-foreground">{t("exchange")}</TableHead>
+                      <TableHead className="text-right text-foreground">{t("rate")}</TableHead>
+                      <TableHead className="text-right text-foreground">{t("annualized")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -524,7 +542,7 @@ export default function MarketOverview() {
             )}
           </CardContent>
           <CardFooter className="text-xs text-muted-foreground border-t border-border/40 px-6 py-3">
-            资金费率每8小时结算一次，年化计算方式: 费率 × 3 × 365
+            {t("fundingRateDesc")}
           </CardFooter>
         </Card>
       </div>

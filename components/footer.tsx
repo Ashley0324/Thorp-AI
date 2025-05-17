@@ -1,85 +1,86 @@
+"use client"
+
 import Link from "next/link"
-import { COMPANY, FEATURES, NAV_ITEMS } from "@/lib/constants"
-import { Twitter, Github, MessageCircle, Mail, Bitcoin } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import Image from "next/image"
+import { COMPANY, FEATURES } from "@/lib/constants"
+import { useLanguage } from "@/contexts/language-context"
+import { Twitter, Github, MessageCircle } from "lucide-react"
 
 export default function Footer() {
+  const { t } = useLanguage()
+
+  // Map of feature titles to translation keys
+  const featureTranslationKeys: Record<string, string> = {
+    实时市场数据: "realTimeMarketData",
+    技术指标分析: "technicalAnalysis",
+    新闻与事件追踪: "newsTracking",
+    衍生品市场数据: "derivativesData",
+    AI预测模型: "aiPredictionModel",
+  }
+
   return (
     <footer className="border-t border-border/40 bg-background/80 backdrop-blur-sm">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {/* Company Info */}
+      <div className="container px-4 py-8 md:py-12">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Bitcoin className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-300">
-                {COMPANY.logo.text}
-              </h3>
+            <div className="mb-4">
+              <Image
+                src={COMPANY.logo.path || "/placeholder.svg"}
+                alt={COMPANY.logo.alt}
+                width={120}
+                height={40}
+                className="h-8 w-auto"
+              />
             </div>
-            <p className="text-sm text-muted-foreground">{COMPANY.description}</p>
+            <p className="text-sm text-muted-foreground max-w-xs">{t("copyright")}</p>
             <div className="flex space-x-4">
-              <Link href={COMPANY.social.twitter} target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Twitter className="h-4 w-4" />
-                  <span className="sr-only">Twitter</span>
-                </Button>
+              <Link
+                href={COMPANY.social.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary"
+                aria-label="Twitter"
+              >
+                <Twitter className="h-5 w-5" />
               </Link>
-              <Link href={COMPANY.social.telegram} target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MessageCircle className="h-4 w-4" />
-                  <span className="sr-only">Telegram</span>
-                </Button>
+              <Link
+                href={COMPANY.social.telegram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary"
+                aria-label="Telegram"
+              >
+                <MessageCircle className="h-5 w-5" />
               </Link>
-              <Link href={COMPANY.social.github} target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Github className="h-4 w-4" />
-                  <span className="sr-only">GitHub</span>
-                </Button>
+              <Link
+                href={COMPANY.social.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary"
+                aria-label="GitHub"
+              >
+                <Github className="h-5 w-5" />
               </Link>
             </div>
           </div>
-
-          {/* Navigation */}
-          <div>
-            <h3 className="font-medium mb-4">快速导航</h3>
-            <ul className="space-y-2">
-              {NAV_ITEMS.map((item) => (
-                <li key={item.href}>
-                  <Link href={item.href} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">{t("contactUs")}</h3>
+            <p className="text-sm text-muted-foreground">Email: {COMPANY.contact.email}</p>
+            <p className="text-sm text-muted-foreground">{COMPANY.contact.phone}</p>
           </div>
-
-          {/* Features */}
-          <div>
-            <h3 className="font-medium mb-4">主要功能</h3>
-            <ul className="space-y-2">
-              {FEATURES.slice(0, 4).map((feature, index) => (
-                <li key={index} className="text-sm text-muted-foreground">
-                  {feature.title}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h3 className="font-medium mb-4">联系我们</h3>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <span>{COMPANY.contact.email}</span>
-              </div>
-              <p className="text-sm text-muted-foreground">{COMPANY.contact.phone}</p>
+          <div className="space-y-4 md:col-span-2">
+            <h3 className="text-lg font-medium">{t("features")}</h3>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {FEATURES.map((feature, index) => {
+                const translationKey = featureTranslationKeys[feature.title] || feature.title
+                return (
+                  <div key={index} className="flex flex-col space-y-1">
+                    <h4 className="text-sm font-medium">{t(translationKey)}</h4>
+                  </div>
+                )
+              })}
             </div>
           </div>
-        </div>
-
-        <div className="border-t border-border/40 mt-8 pt-6 text-center">
-          <p className="text-sm text-muted-foreground">{COMPANY.copyright}</p>
         </div>
       </div>
     </footer>

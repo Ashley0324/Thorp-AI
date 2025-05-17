@@ -3,7 +3,21 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, BarChart, Bar } from "recharts"
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  Bar,
+  AreaChart,
+  Area,
+  ComposedChart,
+  Cell,
+  Legend,
+} from "recharts"
 import { getBTCKlines } from "@/lib/binance-api"
 import { calculateRSI, calculateMACD, calculateBollingerBands, generateSignals } from "@/lib/indicators"
 import { Badge } from "@/components/ui/badge"
@@ -67,8 +81,9 @@ export default function IndicatorsPage() {
         return dates
           .map((date, i) => ({
             date,
+            date: date,
             price: prices[i],
-            macd: i < prices.length - macdLine.length ? null : macdLine[i - (prices.length - macdLine.length)],
+            MACD: i < prices.length - macdLine.length ? null : macdLine[i - (prices.length - macdLine.length)],
             signal: i < prices.length - signalLine.length ? null : signalLine[i - (prices.length - signalLine.length)],
             histogram: i < prices.length - histogram.length ? null : histogram[i - (prices.length - histogram.length)],
           }))
@@ -109,12 +124,83 @@ export default function IndicatorsPage() {
     }
   }
 
+  const macdData = chartData
+
+  const ChartContainer = ({ children, config }) => {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        {children}
+      </ResponsiveContainer>
+    )
+  }
+
+  const ChartTooltipContent = () => {
+    return (
+      <div className="bg-gray-800 text-white p-2 rounded-md">
+        <p className="font-bold">价格: {macdData[0]?.price}</p>
+        <p>MACD: {macdData[0]?.MACD}</p>
+        <p>Signal: {macdData[0]?.signal}</p>
+        <p>Histogram: {macdData[0]?.histogram}</p>
+      </div>
+    )
+  }
+
+  const ChartLegendContent = () => {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex items-center">
+          <span className="inline-block w-3 h-3 rounded-full bg-blue-500 mr-1"></span>
+          MACD
+        </div>
+        <div className="flex items-center">
+          <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>
+          Signal
+        </div>
+        <div className="flex items-center">
+          <span className="inline-block w-3 h-3 rounded-full bg-gray-500 mr-1"></span>
+          Histogram
+        </div>
+      </div>
+    )
+  }
+
+  const chartConfig = {
+    margin: { top: 5, right: 20, left: 20, bottom: 5 },
+    cartesianGrid: { strokeDasharray: "3 3" },
+    xAxis: { dataKey: "date" },
+    yAxis: { domain: ["auto", "auto"] },
+    tooltip: {
+      contentStyle: {
+        backgroundColor: "rgba(30, 30, 30, 0.8)",
+        borderColor: "#8400FF",
+        borderRadius: "8px",
+      },
+      labelStyle: { color: "#fff" },
+      itemStyle: { color: "#fff" },
+    },
+  }
+
   return (
     <div className="space-y-6">
+      <style jsx global>{`
+        .macd-bar {
+          fill: #9ca3af; /* Default gray color */
+        }
+
+        .macd-bar:hover {
+          fill: #8400FF;
+        }
+
+        .macd-bar.positive:hover {
+          fill: #10b981;
+        }
+
+        .macd-bar.negative:hover {
+          fill: #ef4444;
+        }
+      `}</style>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-300">
-          BTC指标分析
-        </h1>
+        <h1 className="text-3xl font-bold text-foreground">BTC指标分析</h1>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">数据更新时间:</span>
           <span className="text-sm">{new Date().toLocaleString()}</span>
@@ -125,7 +211,7 @@ export default function IndicatorsPage() {
       <Card className="border-border/40 bg-background/60 backdrop-blur-sm">
         <CardContent className="p-4">
           <Tabs defaultValue="1d" className="w-full">
-            <TabsList className="bg-background/50 w-full sm:w-auto grid grid-cols-4 sm:flex">
+            <TabsList className="bg-background/50 w-full grid grid-cols-4 overflow-x-auto">
               <TabsTrigger
                 value="1h"
                 onClick={() => setTimeframe("1h")}
@@ -173,7 +259,7 @@ export default function IndicatorsPage() {
               <Skeleton className="h-8 w-24" />
             ) : (
               <div className="flex flex-col">
-                <div className="text-2xl font-bold mb-1 text-primary">{signals?.rsi.value.toFixed(2)}</div>
+                <div className="text-2xl font-bold mb-1 text-foreground">{signals?.rsi.value.toFixed(2)}</div>
                 {renderSignalBadge(signals?.rsi.signal)}
               </div>
             )}
@@ -192,7 +278,7 @@ export default function IndicatorsPage() {
               <Skeleton className="h-8 w-24" />
             ) : (
               <div className="flex flex-col">
-                <div className="text-2xl font-bold mb-1 text-primary">信号线交叉</div>
+                <div className="text-2xl font-bold mb-1 text-foreground">信号线交叉</div>
                 {renderSignalBadge(signals?.macd.signal)}
               </div>
             )}
@@ -211,7 +297,7 @@ export default function IndicatorsPage() {
               <Skeleton className="h-8 w-24" />
             ) : (
               <div className="flex flex-col">
-                <div className="text-2xl font-bold mb-1 text-primary">价格位置</div>
+                <div className="text-2xl font-bold mb-1 text-foreground">价格位置</div>
                 {renderSignalBadge(signals?.bollingerBands.signal)}
               </div>
             )}
@@ -230,7 +316,7 @@ export default function IndicatorsPage() {
               <Skeleton className="h-8 w-24" />
             ) : (
               <div className="flex flex-col">
-                <div className="text-2xl font-bold mb-1 text-primary">周期顶部</div>
+                <div className="text-2xl font-bold mb-1 text-foreground">周期顶部</div>
                 {renderSignalBadge(signals?.piCycle.signal)}
               </div>
             )}
@@ -249,7 +335,7 @@ export default function IndicatorsPage() {
               <Skeleton className="h-8 w-24" />
             ) : (
               <div className="flex flex-col">
-                <div className="text-2xl font-bold mb-1 text-primary">{signals?.mayerMultiple.value.toFixed(2)}</div>
+                <div className="text-2xl font-bold mb-1 text-foreground">{signals?.mayerMultiple.value.toFixed(2)}</div>
                 {renderSignalBadge(signals?.mayerMultiple.signal)}
               </div>
             )}
@@ -298,7 +384,7 @@ export default function IndicatorsPage() {
 
       {/* Indicator Charts */}
       <Tabs defaultValue="rsi" className="w-full" onValueChange={setActiveTab}>
-        <TabsList className="bg-background/50 w-full sm:w-auto grid grid-cols-2 sm:grid-cols-5 sm:flex">
+        <TabsList className="bg-background/50 w-full grid grid-cols-3 sm:grid-cols-5 overflow-x-auto">
           <TabsTrigger value="rsi" className="data-[state=active]:bg-primary data-[state=active]:text-white">
             RSI
           </TabsTrigger>
@@ -335,10 +421,10 @@ export default function IndicatorsPage() {
                 <div className="space-y-8">
                   <div className="h-[180px] md:h-[200px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
+                      <AreaChart data={chartData}>
                         <defs>
                           <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#8400FF" stopOpacity={0.3} />
+                            <stop offset="5%" stopColor="#8400FF" stopOpacity={0.8} />
                             <stop offset="95%" stopColor="#8400FF" stopOpacity={0} />
                           </linearGradient>
                         </defs>
@@ -359,7 +445,7 @@ export default function IndicatorsPage() {
                           labelStyle={{ color: "#fff" }}
                           itemStyle={{ color: "#fff" }}
                         />
-                        <Line
+                        <Area
                           type="monotone"
                           dataKey="price"
                           name="价格"
@@ -367,8 +453,10 @@ export default function IndicatorsPage() {
                           strokeWidth={2}
                           dot={false}
                           activeDot={{ r: 6, fill: "#8400FF", stroke: "#fff", strokeWidth: 2 }}
+                          fillOpacity={1}
+                          fill="url(#colorPrice)"
                         />
-                      </LineChart>
+                      </AreaChart>
                     </ResponsiveContainer>
                   </div>
 
@@ -448,7 +536,13 @@ export default function IndicatorsPage() {
                 <div className="space-y-8">
                   <div className="h-[180px] md:h-[200px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient id="colorPrice2" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#8400FF" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#8400FF" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                         <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" tick={{ fill: "rgba(255,255,255,0.5)" }} />
                         <YAxis
@@ -466,7 +560,7 @@ export default function IndicatorsPage() {
                           labelStyle={{ color: "#fff" }}
                           itemStyle={{ color: "#fff" }}
                         />
-                        <Line
+                        <Area
                           type="monotone"
                           dataKey="price"
                           name="价格"
@@ -474,78 +568,40 @@ export default function IndicatorsPage() {
                           strokeWidth={2}
                           dot={false}
                           activeDot={{ r: 6, fill: "#8400FF", stroke: "#fff", strokeWidth: 2 }}
+                          fillOpacity={1}
+                          fill="url(#colorPrice2)"
                         />
-                      </LineChart>
+                      </AreaChart>
                     </ResponsiveContainer>
                   </div>
 
-                  <div className="h-[180px] md:h-[200px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                        <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" tick={{ fill: "rgba(255,255,255,0.5)" }} />
-                        <YAxis
-                          domain={["auto", "auto"]}
-                          stroke="rgba(255,255,255,0.5)"
-                          tick={{ fill: "rgba(255,255,255,0.5)" }}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(30, 30, 30, 0.8)",
-                            borderColor: "#8400FF",
-                            borderRadius: "8px",
-                          }}
-                          labelStyle={{ color: "#fff" }}
-                          itemStyle={{ color: "#fff" }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="macd"
-                          name="MACD线"
-                          stroke="#8400FF"
-                          strokeWidth={2}
-                          dot={false}
-                          activeDot={{ r: 6, fill: "#8400FF", stroke: "#fff", strokeWidth: 2 }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="signal"
-                          name="信号线"
-                          stroke="#ff6b00"
-                          strokeWidth={2}
-                          dot={false}
-                          activeDot={{ r: 6, fill: "#ff6b00", stroke: "#fff", strokeWidth: 2 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="h-[120px] md:h-[150px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                        <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" tick={{ fill: "rgba(255,255,255,0.5)" }} />
-                        <YAxis
-                          domain={["auto", "auto"]}
-                          stroke="rgba(255,255,255,0.5)"
-                          tick={{ fill: "rgba(255,255,255,0.5)" }}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(30, 30, 30, 0.8)",
-                            borderColor: "#8400FF",
-                            borderRadius: "8px",
-                          }}
-                          labelStyle={{ color: "#fff" }}
-                          itemStyle={{ color: "#fff" }}
-                        />
+                  {/* MACD Chart */}
+                  <div className="w-full h-[300px]">
+                    <ChartContainer config={chartConfig}>
+                      <ComposedChart data={macdData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip content={<ChartTooltipContent />} />
+                        <Legend content={<ChartLegendContent />} />
                         <Bar
                           dataKey="histogram"
-                          name="柱状图"
-                          fill={(entry) => (entry.histogram >= 0 ? "#8400FF" : "#ff6b00")}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                          fill="#9ca3af"
+                          radius={[4, 4, 0, 0]}
+                          className="macd-bar"
+                          isAnimationActive={false}
+                        >
+                          {macdData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              data-macd-value={entry.histogram >= 0 ? "positive" : "negative"}
+                            />
+                          ))}
+                        </Bar>
+                        <Line type="monotone" dataKey="MACD" stroke="#8884d8" dot={false} />
+                        <Line type="monotone" dataKey="signal" stroke="#82ca9d" dot={false} />
+                      </ComposedChart>
+                    </ChartContainer>
                   </div>
                 </div>
               )}
@@ -646,14 +702,10 @@ export default function IndicatorsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="px-2 sm:px-6">
-              {loading ? (
-                <Skeleton className="h-[400px] w-full" />
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8">
-                  <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">彩虹图需要更长时间的历史数据，请稍后查看</p>
-                </div>
-              )}
+              <div className="flex flex-col items-center justify-center py-8">
+                <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">彩虹图需要更长时间的历史数据，请稍后查看</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -677,7 +729,13 @@ export default function IndicatorsPage() {
                 <div className="space-y-8">
                   <div className="h-[180px] md:h-[200px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient id="colorPrice3" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#8400FF" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#8400FF" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                         <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" tick={{ fill: "rgba(255,255,255,0.5)" }} />
                         <YAxis
@@ -695,7 +753,7 @@ export default function IndicatorsPage() {
                           labelStyle={{ color: "#fff" }}
                           itemStyle={{ color: "#fff" }}
                         />
-                        <Line
+                        <Area
                           type="monotone"
                           dataKey="price"
                           name="价格"
@@ -703,14 +761,18 @@ export default function IndicatorsPage() {
                           strokeWidth={2}
                           dot={false}
                           activeDot={{ r: 6, fill: "#8400FF", stroke: "#fff", strokeWidth: 2 }}
+                          fillOpacity={1}
+                          fill="url(#colorPrice3)"
                         />
-                      </LineChart>
+                      </AreaChart>
                     </ResponsiveContainer>
                   </div>
 
                   <Alert className="bg-primary/5 border-primary/20">
                     <Gauge className="h-5 w-5 text-primary" />
-                    <AlertTitle>当前 Mayer Multiple: {signals?.mayerMultiple.value.toFixed(2)}</AlertTitle>
+                    <AlertTitle className="text-foreground">
+                      当前 Mayer Multiple: {signals?.mayerMultiple.value.toFixed(2)}
+                    </AlertTitle>
                     <AlertDescription>
                       {signals?.mayerMultiple.value < 0.8
                         ? "当前值低于0.8，历史上这通常是买入比特币的良好时机。"

@@ -84,9 +84,7 @@ export default function NewsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-300">
-          热点事件
-        </h1>
+        <h1 className="text-3xl font-bold text-foreground">热点事件</h1>
         <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/50">
           <AlertCircle className="h-3 w-3 mr-1" />
           模拟数据
@@ -94,7 +92,7 @@ export default function NewsPage() {
       </div>
 
       <Tabs defaultValue="news" className="w-full">
-        <TabsList className="bg-background/50 w-full sm:w-auto grid grid-cols-2 sm:flex">
+        <TabsList className="bg-background/50 w-full grid grid-cols-2 overflow-x-auto">
           <TabsTrigger value="news" className="data-[state=active]:bg-primary data-[state=active]:text-white">
             最新新闻
           </TabsTrigger>
@@ -194,8 +192,8 @@ export default function NewsPage() {
         </TabsContent>
 
         <TabsContent value="events">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="md:col-span-1 border-border/40 bg-background/60 backdrop-blur-sm">
+          <div className="flex flex-col gap-6">
+            <Card className="border-border/40 bg-background/60 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CalendarIcon className="h-5 w-5 text-primary" />
@@ -204,20 +202,30 @@ export default function NewsPage() {
                 <CardDescription>选择日期查看事件</CardDescription>
               </CardHeader>
               <CardContent>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="rounded-md border border-border/40"
-                  classNames={{
-                    day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-                    day_today: "bg-primary/10 text-primary",
-                  }}
-                />
+                <div className="flex justify-center sm:justify-start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    className="rounded-md border border-border/40 max-w-full"
+                    classNames={{
+                      day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+                      day_today: "bg-primary/10 text-primary",
+                      months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                      month: "space-y-4 w-full",
+                      table: "w-full border-collapse space-y-1",
+                      head_row: "flex w-full",
+                      row: "flex w-full mt-2",
+                      head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] sm:w-10",
+                      cell: "h-9 w-9 text-center text-sm p-0 relative sm:w-10 sm:h-10",
+                      day: "h-9 w-9 p-0 font-normal sm:w-10 sm:h-10",
+                    }}
+                  />
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="md:col-span-2 border-border/40 bg-background/60 backdrop-blur-sm">
+            <Card className="border-border/40 bg-background/60 backdrop-blur-sm">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle>{selectedDate ? selectedDate.toLocaleDateString() : "所有事件"}</CardTitle>
@@ -252,9 +260,9 @@ export default function NewsPage() {
                               : "border-l-4 border-l-gray-500"
                         }`}
                       >
-                        <div className="flex justify-between items-start">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                           <h3 className="font-semibold text-lg">{event.title}</h3>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             {renderEventTypeBadge(event.type)}
                             {renderImpactBadge(event.impact)}
                           </div>
